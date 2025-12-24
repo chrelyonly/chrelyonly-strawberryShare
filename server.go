@@ -102,7 +102,7 @@ func (s *FileServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 实际业务中，这里可以将对方设备加入到"最近设备"列表或缓存中
-	fmt.Printf("[Server] 心跳ping: %s (%s)\n", req.Alias, req.Fingerprint)
+	//fmt.Printf("[Server] 心跳ping: %s (%s)\n", req.Alias, req.Fingerprint)
 	dto := model.InfoDto{
 		Alias:       s.alias,
 		Version:     ProtocolVersion,
