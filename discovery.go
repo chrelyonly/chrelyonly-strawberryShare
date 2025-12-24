@@ -8,9 +8,6 @@ import (
 	"time"
 )
 
-// LocalSend 默认多播组地址
-const DefaultMulticastGroup = "224.0.0.167"
-
 // MulticastService 负责设备的发现逻辑
 // 它包含两部分功能：
 // 1. Listener: 监听 UDP 多播端口，发现其他设备上线。
@@ -40,7 +37,7 @@ func (s *MulticastService) StartListener() {
 	// 解析多播地址
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", DefaultMulticastGroup, s.port))
 	if err != nil {
-		fmt.Printf("解析 UDP 地址失败: %v\n", err)
+		fmt.Printf("[发现服务] 解析 UDP 地址失败: %v\n", err)
 		return
 	}
 
@@ -48,29 +45,29 @@ func (s *MulticastService) StartListener() {
 	// 注意：在某些操作系统上，绑定多播端口可能需要特殊权限或配置
 	conn, err := net.ListenMulticastUDP("udp", nil, addr)
 	if err != nil {
-		fmt.Printf("监听 UDP 多播失败: %v\n", err)
+		fmt.Printf("[发现服务] 监听 UDP 多播失败: %v\n", err)
 		return
 	}
 	defer conn.Close()
 
 	// 设置较大的读取缓冲区，避免丢包
-	conn.SetReadBuffer(1024 * 10)
+	conn.SetReadBuffer(UDPSocketBufferSize)
 
 	fmt.Printf("[发现服务] 正在监听多播 %s:%d\n", DefaultMulticastGroup, s.port)
 
-	buf := make([]byte, 65535) // 最大 UDP 包大小
+	buf := make([]byte, UDPBufferSize) // 最大 UDP 包大小
 	for {
 		// 读取数据包
 		n, src, err := conn.ReadFromUDP(buf)
 		if err != nil {
-			fmt.Printf("读取 UDP 数据失败: %v\n", err)
+			fmt.Printf("[发现服务] 读取 UDP 数据失败: %v\n", err)
 			continue
 		}
 
 		// 解析 JSON 数据
 		var dto model.MulticastDto
 		if err := json.Unmarshal(buf[:n], &dto); err != nil {
-			fmt.Printf("解析多播消息失败: %v\n", err)
+			fmt.Printf("[发现服务] 解析多播消息失败: %v\n", err)
 			continue
 		}
 
@@ -102,14 +99,14 @@ func (s *MulticastService) SendAnnouncement() {
 	// 注意：这里的端口必须与接收端监听的端口一致 (53317)
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", DefaultMulticastGroup, DefaultPort))
 	if err != nil {
-		fmt.Printf("解析 UDP 地址失败: %v\n", err)
+		fmt.Printf("[发现服务] 解析 UDP 地址失败: %v\n", err)
 		return
 	}
 
 	// 创建 UDP 连接
 	conn, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
-		fmt.Printf("连接 UDP 失败: %v\n", err)
+		fmt.Printf("[发现服务] 连接 UDP 失败: %v\n", err)
 		return
 	}
 	defer conn.Close()

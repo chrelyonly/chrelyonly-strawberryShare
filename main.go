@@ -16,7 +16,7 @@ import (
 func main() {
 	// --- 1. 解析命令行参数 ---
 	port := flag.Int("port", DefaultPort, "监听端口 (默认: 53317)")
-	alias := flag.String("alias", "Go-LocalSend", "设备别名")
+	alias := flag.String("alias", DefaultAlias, "设备别名")
 	mode := flag.String("mode", "server", "运行模式: server (接收) 或 sender (发送)")
 	targetIP := flag.String("target", "", "目标 IP 地址 (发送模式必填)")
 	fileToSend := flag.String("file", "", "待发送文件路径 (发送模式必填)")
@@ -25,10 +25,10 @@ func main() {
 	// --- 2. 初始化设备标识 ---
 	// 实际应用中，指纹应持久化存储，以保持设备身份一致性
 	fingerprint := uuid.New().String()
-	deviceModel := "Go-Client" // 设备型号
+	deviceModel := DefaultDeviceModel // 设备型号
 
 	fmt.Println("------------------------------------------------")
-	fmt.Printf("Go-LocalSend 协议版本 v%s\n", ProtocolVersion)
+	fmt.Printf("strawberryShare 协议版本 v%s\n", ProtocolVersion)
 	fmt.Printf("别名:        %s\n", *alias)
 	fmt.Printf("指纹:        %s\n", fingerprint)
 	fmt.Printf("端口:        %d\n", *port)
@@ -74,11 +74,11 @@ func main() {
 		// 完善的实现应该是先通过 Discovery 发现对方的 Port，再建立连接。
 		err := sender.SendFile(*targetIP, DefaultPort, *fileToSend)
 		if err != nil {
-			log.Fatalf("发送失败: %v", err)
+			log.Fatalf("[main] 发送失败: %v", err)
 		}
 
-		fmt.Println("完成。")
+		fmt.Println("[main] 完成。")
 	} else {
-		log.Fatal("无效模式。请使用 'server' 或 'sender'")
+		log.Fatal("[main] 无效模式。请使用 'server' 或 'sender'")
 	}
 }

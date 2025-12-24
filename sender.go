@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -24,7 +23,7 @@ type Sender struct {
 func NewSender(alias, fingerprint, deviceModel string, port int) *Sender {
 	return &Sender{
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: ConnectTimeout,
 		},
 		info: model.RegisterDto{
 			Alias:       alias,

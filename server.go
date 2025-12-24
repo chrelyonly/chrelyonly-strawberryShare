@@ -71,7 +71,7 @@ func (s *FileServer) Start() {
 // 返回本机基本信息，用于其他设备通过 IP 直接访问时的探测
 func (s *FileServer) handleInfo(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (s *FileServer) handleInfo(w http.ResponseWriter, r *http.Request) {
 // 其他设备发现本机后，可能会发送此请求进行握手，或者在准备发送文件前进行握手
 func (s *FileServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -102,7 +102,7 @@ func (s *FileServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 实际业务中，这里可以将对方设备加入到"最近设备"列表或缓存中
-	//fmt.Printf("[Server] 心跳ping: %s (%s)\n", req.Alias, req.Fingerprint)
+	fmt.Printf("[Server] 心跳ping: %s (%s)\n", req.Alias, req.Fingerprint)
 	dto := model.InfoDto{
 		Alias:       s.alias,
 		Version:     ProtocolVersion,
@@ -120,7 +120,7 @@ func (s *FileServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 // 接收方（本机）需要在此决定是否接受请求（自动接受或弹窗询问用户）。
 func (s *FileServer) handlePrepareUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (s *FileServer) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	// 5. 准备保存路径
 	// 默认保存到当前目录下的 downloads 文件夹
-	downloadDir := "downloads"
+	downloadDir := DefaultDownloadDir
 	if err := os.MkdirAll(downloadDir, 0755); err != nil {
 		http.Error(w, "Failed to create download dir", http.StatusInternalServerError)
 		return
@@ -252,7 +252,7 @@ func (s *FileServer) handleUpload(w http.ResponseWriter, r *http.Request) {
 // 发送方或接收方取消传输
 func (s *FileServer) handleCancel(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
 		return
 	}
 	sessionId := r.URL.Query().Get("sessionId")
