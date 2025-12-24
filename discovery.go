@@ -51,7 +51,10 @@ func (s *MulticastService) StartListener() {
 	defer conn.Close()
 
 	// 设置较大的读取缓冲区，避免丢包
-	conn.SetReadBuffer(UDPSocketBufferSize)
+	err = conn.SetReadBuffer(UDPSocketBufferSize)
+	if err != nil {
+		return
+	}
 
 	fmt.Printf("[发现服务] 正在监听多播 %s:%d\n", DefaultMulticastGroup, s.port)
 
@@ -87,7 +90,7 @@ func (s *MulticastService) StartListener() {
 		if dto.Announcement || dto.Announce {
 			// 简单策略：收到宣告，我也发一次宣告（注意避免广播风暴，实际可加去重或限流）
 			// 这里仅打印日志，实际应用中可以调用 s.SendAnnouncement()
-			// go s.SendAnnouncement()
+			go s.SendAnnouncement()
 		}
 	}
 }
