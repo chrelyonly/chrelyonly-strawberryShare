@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -62,9 +63,26 @@ func (s *FileServer) Start() {
 	fmt.Printf("[服务端] HTTP 服务器正在监听 %s\n", addr)
 
 	// 启动监听
-	if err := http.ListenAndServe(addr, mux); err != nil {
-		fmt.Printf("[服务端] 错误: %v\n", err)
-	}
+	//if err := http.ListenAndServe(addr, mux); err != nil {
+	//	fmt.Printf("[服务端] 错误: %v\n", err)
+	//}
+
+	httpPort := s.port // 53317
+	func() {
+		log.Printf("[HTTP] listen :%d\n", httpPort)
+		http.ListenAndServe(fmt.Sprintf(":%d", httpPort), mux)
+	}()
+
+	//httpsPort := s.port + 1 // 53318
+	//func() {
+	//	log.Printf("[HTTPS] listen :%d\n", httpsPort)
+	//	http.ListenAndServeTLS(
+	//		fmt.Sprintf(":%d", httpsPort),
+	//		"server.pem",
+	//		"server.key",
+	//		mux,
+	//	)
+	//}()
 }
 
 // handleInfo GET /api/localsend/v2/info
@@ -91,16 +109,6 @@ func (s *FileServer) handleInfo(w http.ResponseWriter, r *http.Request) {
 // handleRegister POST /api/localsend/v2/register
 // 其他设备发现本机后，可能会发送此请求进行握手，或者在准备发送文件前进行握手
 func (s *FileServer) handleRegister(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req model.RegisterDto
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 	// 实际业务中，这里可以将对方设备加入到"最近设备"列表或缓存中
 	//fmt.Printf("[Server] 心跳ping: %s (%s)\n", req.Alias, req.Fingerprint)
 	dto := model.InfoDto{

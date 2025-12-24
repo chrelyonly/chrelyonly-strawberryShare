@@ -16,7 +16,7 @@ const (
 	DefaultMulticastGroup = "224.0.0.167"
 
 	// DefaultAlias 默认设备别名
-	DefaultAlias = "局域网共享小助手"
+	DefaultAlias = "局域网共享传输"
 
 	// DefaultDeviceModel 默认设备型号
 	DefaultDeviceModel = runtime.GOOS
