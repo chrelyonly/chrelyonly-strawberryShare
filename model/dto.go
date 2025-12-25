@@ -4,11 +4,6 @@ package model
 // LocalSend 支持 HTTP 和 HTTPS，v2 协议中默认为 HTTPS，但在局域网内 HTTP 更为常见和高效
 type ProtocolType string
 
-const (
-	ProtocolTypeHttp  ProtocolType = "http"
-	ProtocolTypeHttps ProtocolType = "https"
-)
-
 // DeviceType 定义设备类型
 // 用于在发现阶段告知对方自己的设备类型，以便显示对应的图标
 type DeviceType string
@@ -42,12 +37,14 @@ type MulticastDto struct {
 // 响应 GET /api/localsend/v2/info
 // 用于在单播（直接 IP 访问）时返回设备基本信息
 type InfoDto struct {
-	Alias       string     `json:"alias"`
-	Version     string     `json:"version,omitempty"`
-	DeviceModel string     `json:"deviceModel,omitempty"`
-	DeviceType  DeviceType `json:"deviceType,omitempty"`
-	Fingerprint string     `json:"fingerprint,omitempty"`
-	Download    bool       `json:"download,omitempty"`
+	Alias       string       `json:"alias"`
+	Version     string       `json:"version,omitempty"`
+	DeviceModel string       `json:"deviceModel,omitempty"`
+	DeviceType  DeviceType   `json:"deviceType,omitempty"`
+	Fingerprint string       `json:"fingerprint,omitempty"`
+	Port        int          `json:"port,omitempty"`
+	Protocol    ProtocolType `json:"protocol,omitempty"`
+	Download    bool         `json:"download,omitempty"`
 }
 
 // RegisterDto 对应 common/lib/model/dto/register_dto.dart

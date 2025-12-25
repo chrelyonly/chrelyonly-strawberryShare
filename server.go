@@ -67,22 +67,24 @@ func (s *FileServer) Start() {
 	//	fmt.Printf("[服务端] 错误: %v\n", err)
 	//}
 
-	httpPort := s.port // 53317
-	func() {
-		log.Printf("[HTTP] listen :%d\n", httpPort)
-		http.ListenAndServe(fmt.Sprintf(":%d", httpPort), mux)
-	}()
-
-	//httpsPort := s.port + 1 // 53318
-	//func() {
-	//	log.Printf("[HTTPS] listen :%d\n", httpsPort)
-	//	http.ListenAndServeTLS(
-	//		fmt.Sprintf(":%d", httpsPort),
-	//		"server.pem",
-	//		"server.key",
-	//		mux,
-	//	)
-	//}()
+	if IsHttps {
+		httpsPort := s.port
+		func() {
+			log.Printf("[HTTPS] listen :%d\n", httpsPort)
+			http.ListenAndServeTLS(
+				fmt.Sprintf(":%d", httpsPort),
+				"server.pem",
+				"server.key",
+				mux,
+			)
+		}()
+	} else {
+		httpPort := s.port
+		func() {
+			log.Printf("[HTTP] listen :%d\n", httpPort)
+			http.ListenAndServe(fmt.Sprintf(":%d", httpPort), mux)
+		}()
+	}
 }
 
 // handleInfo GET /api/localsend/v2/info
@@ -99,6 +101,8 @@ func (s *FileServer) handleInfo(w http.ResponseWriter, r *http.Request) {
 		DeviceModel: s.deviceModel,
 		DeviceType:  model.DeviceTypeDesktop,
 		Fingerprint: s.fingerprint,
+		Port:        s.port,
+		Protocol:    ProtocolTypeHttpStatus,
 		Download:    false,
 	}
 
@@ -117,6 +121,8 @@ func (s *FileServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 		DeviceModel: s.deviceModel,
 		DeviceType:  model.DeviceTypeDesktop,
 		Fingerprint: s.fingerprint,
+		Port:        s.port,
+		Protocol:    ProtocolTypeHttpStatus,
 		Download:    false,
 	}
 	w.Header().Set("Content-Type", "application/json")

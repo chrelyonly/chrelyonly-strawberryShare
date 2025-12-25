@@ -32,7 +32,7 @@ func NewSender(alias, fingerprint, deviceModel string, port int) *Sender {
 			DeviceType:  model.DeviceTypeDesktop,
 			Fingerprint: fingerprint,
 			Port:        port,
-			Protocol:    model.ProtocolTypeHttp,
+			Protocol:    ProtocolTypeHttpStatus,
 			Download:    false,
 		},
 	}

@@ -1,11 +1,14 @@
 package main
 
 import (
+	"chrelyonly-localsend-go/model"
 	"runtime"
 	"time"
 )
 
 const (
+	// IsHttps 是否开启https
+	IsHttps = true
 	// DefaultPort LocalSend 默认端口
 	DefaultPort = 53317
 
@@ -33,3 +36,17 @@ const (
 	// DefaultDownloadDir 默认下载目录
 	DefaultDownloadDir = "downloads"
 )
+
+var (
+	ProtocolTypeHttpStatus                    = ProtocolTypeHttp
+	ProtocolTypeHttp       model.ProtocolType = "http"
+	ProtocolTypeHttps      model.ProtocolType = "https"
+)
+
+func init() {
+	if IsHttps {
+		ProtocolTypeHttpStatus = ProtocolTypeHttps
+	} else {
+		ProtocolTypeHttpStatus = ProtocolTypeHttp
+	}
+}

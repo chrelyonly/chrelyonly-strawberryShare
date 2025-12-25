@@ -122,7 +122,7 @@ func (s *MulticastService) SendAnnouncement() {
 		DeviceType:   s.deviceType,
 		Fingerprint:  s.fingerprint,
 		Port:         s.port, // 告知对方我的 HTTP 服务端口
-		Protocol:     model.ProtocolTypeHttp,
+		Protocol:     ProtocolTypeHttpStatus,
 		Download:     false,
 		Announcement: true, // v1 标志
 		Announce:     true, // v2 标志
