@@ -1,0 +1,139 @@
+# ================================
+# 工作流名称（Actions 页面显示）
+# ================================
+name: Go Build All Platforms (UPX)
+
+# ================================
+# 触发条件
+# 仅允许手动触发（Actions -> Run workflow）
+# ================================
+on:
+  workflow_dispatch:
+
+# ================================
+# 全局环境变量
+# ================================
+env:
+  APP_NAME: strawberryShare        # 🔴 修改为你的程序名（最终二进制名）
+  GO_VERSION: "1.25"     # Go 版本
+  DIST_DIR: dist         # 输出目录
+
+jobs:
+  build:
+    # ================================
+    # Job 名称（会根据 matrix 变化）
+    # ================================
+    name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
+
+    # ================================
+    # 统一使用 Linux runner 做交叉编译
+    # ================================
+    runs-on: ubuntu-latest
+
+    # ================================
+    # 构建矩阵：多系统 + 多架构
+    # ================================
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [windows, linux, darwin]
+        goarch: [amd64, arm64]
+
+    steps:
+      # ================================
+      # 拉取代码
+      # ================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ================================
+      # 安装 Go
+      # ================================
+      - name: 安装 Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      # ================================
+      # 安装 UPX（用于压缩二进制）
+      # ================================
+      - name: 安装 UPX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx
+
+      # ================================
+      # 编译 Go 程序
+      # ================================
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}       # 目标系统
+          GOARCH: ${{ matrix.goarch }}   # 目标架构
+          CGO_ENABLED: 0                 # 关闭 CGO，保证静态单文件
+        run: |
+          mkdir -p $DIST_DIR
+
+          # Windows 平台自动加 .exe 后缀
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then
+            EXT=".exe"
+          fi
+
+          OUTPUT_NAME="${APP_NAME}-${GOOS}-${GOARCH}${EXT}"
+
+          echo "➡️ 开始构建: $OUTPUT_NAME"
+
+          go build \
+            -trimpath \
+            -ldflags="-s -w" \
+            -o "$DIST_DIR/$OUTPUT_NAME"
+
+      # ================================
+      # 使用 UPX 压缩二进制
+      # --best  : 最高压缩等级
+      # --lzma  : LZMA 算法（最狠）
+      # ================================
+      - name: UPX compress
+        run: |
+          FILE="$DIST_DIR/${APP_NAME}-${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            FILE="$FILE.exe"
+          fi
+
+          echo "📦 UPX 压缩: $FILE"
+          upx --best --lzma "$FILE"
+
+      # ================================
+      # 打包发布文件
+      # Windows -> zip
+      # Linux / macOS -> tar.gz
+      # 同时包含证书文件
+      # ================================
+      - name: Package artifact
+        run: |
+          cd $DIST_DIR
+          
+          BASE_NAME="${APP_NAME}-${{ matrix.goos }}-${{ matrix.goarch }}"
+          PACKAGE_DIR="$BASE_NAME"
+          
+          # 创建打包目录
+          mkdir -p "$PACKAGE_DIR"
+          
+          # 拷贝可执行文件
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            cp "${BASE_NAME}.exe" "$PACKAGE_DIR/"
+          else
+            cp "${BASE_NAME}" "$PACKAGE_DIR/"
+          fi
+          
+          # 拷贝证书文件（来自仓库根目录）
+          cp ../server.key "$PACKAGE_DIR/"
+          cp ../server.pem "$PACKAGE_DIR/"
+          
+          # 开始打包
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            zip -r "${BASE_NAME}.zip" "$PACKAGE_DIR"
+          else
+            tar -czf "${BASE_NAME}.tar.gz" "$PACKAGE_DIR"
+          fi
+
