@@ -5,7 +5,7 @@ name: 打包并压缩
 
 # ================================
 # 触发条件
-# 仅允许手动触发（Actions -> Run workflow）
+# 仅允许手动触发
 # ================================
 on:
   workflow_dispatch:
@@ -14,25 +14,19 @@ on:
 # 全局环境变量
 # ================================
 env:
-  APP_NAME: strawberryShare        # 🔴 修改为你的程序名（最终二进制名）
-  GO_VERSION: "1.25"     # Go 版本
-  DIST_DIR: dist         # 输出目录
+  APP_NAME: strawberryShare   # 程序名
+  GO_VERSION: "1.25"          # Go 版本
+  DIST_DIR: dist              # 构建输出目录
 
 jobs:
   build:
-    # ================================
-    # Job 名称（会根据 matrix 变化）
-    # ================================
+    # Job 名称
     name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
 
-    # ================================
-    # 统一使用 Linux runner 做交叉编译
-    # ================================
+    # 使用 Linux runner 做交叉编译
     runs-on: ubuntu-latest
 
-    # ================================
-    # 构建矩阵：多系统 + 多架构
-    # ================================
+    # 构建矩阵
     strategy:
       fail-fast: false
       matrix:
@@ -54,32 +48,31 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-
       # ================================
       # 编译 Go 程序
       # ================================
       - name: Build binary
         env:
-          GOOS: ${{ matrix.goos }}       # 目标系统
-          GOARCH: ${{ matrix.goarch }}   # 目标架构
-          CGO_ENABLED: 0                 # 关闭 CGO，保证静态单文件
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
         run: |
-          mkdir -p $DIST_DIR
+          mkdir -p "$DIST_DIR"
 
-          # Windows 平台自动加 .exe 后缀
+          # Windows 自动加 .exe
           EXT=""
           if [ "$GOOS" = "windows" ]; then
             EXT=".exe"
           fi
 
           OUTPUT_NAME="${APP_NAME}-${GOOS}-${GOARCH}${EXT}"
-
           echo "➡️ 开始构建: $OUTPUT_NAME"
 
           go build \
             -trimpath \
             -ldflags="-s -w" \
             -o "$DIST_DIR/$OUTPUT_NAME"
+
       # ================================
       # 打包发布文件
       # Windows -> zip
@@ -88,29 +81,39 @@ jobs:
       # ================================
       - name: Package artifact
         run: |
-          cd $DIST_DIR
-          
+          cd "$DIST_DIR"
+
           BASE_NAME="${APP_NAME}-${{ matrix.goos }}-${{ matrix.goarch }}"
-          PACKAGE_DIR="$BASE_NAME"
-          
-          # 创建打包目录
+          PACKAGE_DIR="${BASE_NAME}_package"
+
+          # 创建打包目录（避免与二进制同名冲突）
           mkdir -p "$PACKAGE_DIR"
-          
+
           # 拷贝可执行文件
           if [ "${{ matrix.goos }}" = "windows" ]; then
             cp "${BASE_NAME}.exe" "$PACKAGE_DIR/"
           else
             cp "${BASE_NAME}" "$PACKAGE_DIR/"
           fi
-          
+
           # 拷贝证书文件（来自仓库根目录）
           cp ../server.key "$PACKAGE_DIR/"
           cp ../server.pem "$PACKAGE_DIR/"
-          
-          # 开始打包
+
+          # 打包
           if [ "${{ matrix.goos }}" = "windows" ]; then
             zip -r "${BASE_NAME}.zip" "$PACKAGE_DIR"
           else
             tar -czf "${BASE_NAME}.tar.gz" "$PACKAGE_DIR"
           fi
 
+      # ================================
+      # 上传构建产物
+      # ================================
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
