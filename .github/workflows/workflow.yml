@@ -5,10 +5,16 @@ name: 打包并压缩
 
 # ================================
 # 触发条件
-# 仅允许手动触发
 # ================================
+# 手动触发
+#on:
+#  workflow_dispatch:
+#tag打包
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - '*'   # 监听所有 tag
+
 
 # ================================
 # 全局环境变量
@@ -21,7 +27,7 @@ env:
 jobs:
   build:
     # Job 名称
-    name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
+    name: 打包 ${{ matrix.goos }}-${{ matrix.goarch }}
 
     # 使用 Linux runner 做交叉编译
     runs-on: ubuntu-latest
@@ -51,7 +57,7 @@ jobs:
       # ================================
       # 编译 Go 程序
       # ================================
-      - name: Build binary
+      - name: 打包二进制
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
@@ -79,7 +85,7 @@ jobs:
       # Linux / macOS -> tar.gz
       # 同时包含证书文件
       # ================================
-      - name: Package artifact
+      - name: 压缩文件
         run: |
           cd "$DIST_DIR"
 
@@ -118,15 +124,23 @@ jobs:
             dist/*.zip
             dist/*.tar.gz
 
+#保存发布到Release
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
           path: release
-      - uses: softprops/action-gh-release@v2
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: manual-build
-          name: Manual Build
-          files: release/**/*
+          tag_name: ${{ github.ref_name }}      # 使用 push 的 tag
+          name: Release ${{ github.ref_name }}  # Release 名
+          files: |
+            release/**/*.zip
+            release/**/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
