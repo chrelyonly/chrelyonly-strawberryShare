@@ -1,0 +1,10 @@
+network:
+    is_https: true
+    port: 53317
+    multicast_group: 224.0.0.167
+    connect_timeout_seconds: 60
+device:
+    alias: 局域网共享传输
+    device_model: windows
+transfer:
+    download_dir: downloads
