@@ -54,13 +54,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      # ================================
-      # 安装 UPX（用于压缩二进制）
-      # ================================
-      - name: 安装 UPX
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y upx
 
       # ================================
       # 编译 Go 程序
@@ -87,22 +80,6 @@ jobs:
             -trimpath \
             -ldflags="-s -w" \
             -o "$DIST_DIR/$OUTPUT_NAME"
-
-      # ================================
-      # 使用 UPX 压缩二进制
-      # --best  : 最高压缩等级
-      # --lzma  : LZMA 算法（最狠）
-      # ================================
-      - name: UPX compress
-        run: |
-          FILE="$DIST_DIR/${APP_NAME}-${{ matrix.goos }}-${{ matrix.goarch }}"
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            FILE="$FILE.exe"
-          fi
-
-          echo "📦 UPX 压缩: $FILE"
-          upx --best --lzma "$FILE"
-
       # ================================
       # 打包发布文件
       # Windows -> zip
